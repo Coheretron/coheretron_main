@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.venv/
+contracts/out/
+contracts/cache/
+broadcast/
+.env
