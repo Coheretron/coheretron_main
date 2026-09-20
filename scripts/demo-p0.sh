@@ -73,34 +73,34 @@ REGISTRY_JSON="$(forge create contracts/src/CanonicalHeadRegistry.sol:CanonicalH
 REGISTRY="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["deployedTo"])' <<<"$REGISTRY_JSON")"
 GOV_JSON="$(forge create contracts/src/CoheretronGovernor.sol:CoheretronGovernor --rpc-url "$RPC" --private-key "$PK_ADMIN" --broadcast --json --constructor-args "$REGISTRY")"
 GOVERNOR="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["deployedTo"])' <<<"$GOV_JSON")"
-cast send "$REGISTRY" 'setGovernor(address)' "$GOVERNOR" --rpc-url "$RPC" --private-key "$PK_ADMIN" >/dev/null
+cast send "$REGISTRY" 'setGovernor(address)' "$GOVERNOR" --rpc-url "$RPC" --unlocked --from "$ADMIN" >/dev/null
 
 DOC_ID="$(cast keccak 'rulebook')"
 PAD='000000000000000000000000'
 PARENT32="0x${PARENT}${PAD}"
 CANDIDATE32="0x${CANDIDATE}${PAD}"
 AVAIL32="0x${AVAILABILITY}"
-cast send "$REGISTRY" 'initializeDocument(bytes32,(uint8,uint8,bytes32))' "$DOC_ID" "(1,20,$PARENT32)" --rpc-url "$RPC" --private-key "$PK_ADMIN" >/dev/null
+cast send "$REGISTRY" 'initializeDocument(bytes32,(uint8,uint8,bytes32))' "$DOC_ID" "(1,20,$PARENT32)" --rpc-url "$RPC" --unlocked --from "$ADMIN" >/dev/null
 
 log "4/8 Create ballot and configure fractional multi-hop delegation"
 cast send "$GOVERNOR" 'createBallot(bytes32,(uint8,uint8,bytes32),(uint8,uint8,bytes32),bytes32,uint16,uint16)' \
   "$DOC_ID" "(1,20,$PARENT32)" "(1,20,$CANDIDATE32)" "$AVAIL32" 10000 7500 \
-  --rpc-url "$RPC" --private-key "$PK_ADMIN" >/dev/null
+  --rpc-url "$RPC" --unlocked --from "$ADMIN" >/dev/null
 BALLOT=1
 TOTAL=100000000000000000000
-cast send "$GOVERNOR" 'setEntitlement(uint256,address,uint256)' "$BALLOT" "$ALICE" "$TOTAL" --rpc-url "$RPC" --private-key "$PK_ADMIN" >/dev/null
-cast send "$GOVERNOR" 'setDelegation(uint256,address,uint16)' "$BALLOT" "$BOB" 6000 --rpc-url "$RPC" --private-key "$PK_ALICE" >/dev/null
-cast send "$GOVERNOR" 'setDelegation(uint256,address,uint16)' "$BALLOT" "$ADMIN" 5000 --rpc-url "$RPC" --private-key "$PK_BOB" >/dev/null
-cast send "$GOVERNOR" 'openVoting(uint256,uint64)' "$BALLOT" 30 --rpc-url "$RPC" --private-key "$PK_ADMIN" >/dev/null
+cast send "$GOVERNOR" 'setEntitlement(uint256,address,uint256)' "$BALLOT" "$ALICE" "$TOTAL" --rpc-url "$RPC" --unlocked --from "$ADMIN" >/dev/null
+cast send "$GOVERNOR" 'setDelegation(uint256,address,uint16)' "$BALLOT" "$BOB" 6000 --rpc-url "$RPC" --unlocked --from "$ALICE" >/dev/null
+cast send "$GOVERNOR" 'setDelegation(uint256,address,uint16)' "$BALLOT" "$ADMIN" 5000 --rpc-url "$RPC" --unlocked --from "$BOB" >/dev/null
+cast send "$GOVERNOR" 'openVoting(uint256,uint64)' "$BALLOT" 30 --rpc-url "$RPC" --unlocked --from "$ADMIN" >/dev/null
 
 log "5/8 Cast 40% direct + 30% one-hop + 30% two-hop votes"
-cast send "$GOVERNOR" 'castVote(uint256,address,address[],uint8,uint256)' "$BALLOT" "$ALICE" "[$ALICE]" 1 40000000000000000000 --rpc-url "$RPC" --private-key "$PK_ALICE" >/dev/null
-cast send "$GOVERNOR" 'castVote(uint256,address,address[],uint8,uint256)' "$BALLOT" "$ALICE" "[$ALICE,$BOB]" 1 30000000000000000000 --rpc-url "$RPC" --private-key "$PK_BOB" >/dev/null
-cast send "$GOVERNOR" 'castVote(uint256,address,address[],uint8,uint256)' "$BALLOT" "$ALICE" "[$ALICE,$BOB,$ADMIN]" 1 30000000000000000000 --rpc-url "$RPC" --private-key "$PK_ADMIN" >/dev/null
+cast send "$GOVERNOR" 'castVote(uint256,address,address[],uint8,uint256)' "$BALLOT" "$ALICE" "[$ALICE]" 1 40000000000000000000 --rpc-url "$RPC" --unlocked --from "$ALICE" >/dev/null
+cast send "$GOVERNOR" 'castVote(uint256,address,address[],uint8,uint256)' "$BALLOT" "$ALICE" "[$ALICE,$BOB]" 1 30000000000000000000 --rpc-url "$RPC" --unlocked --from "$BOB" >/dev/null
+cast send "$GOVERNOR" 'castVote(uint256,address,address[],uint8,uint256)' "$BALLOT" "$ALICE" "[$ALICE,$BOB,$ADMIN]" 1 30000000000000000000 --rpc-url "$RPC" --unlocked --from "$ADMIN" >/dev/null
 cast rpc --rpc-url "$RPC" evm_increaseTime 31 >/dev/null
 cast rpc --rpc-url "$RPC" evm_mine >/dev/null
-cast send "$GOVERNOR" 'finalize(uint256)' "$BALLOT" --rpc-url "$RPC" --private-key "$PK_ADMIN" >/dev/null
-cast send "$GOVERNOR" 'execute(uint256)' "$BALLOT" --rpc-url "$RPC" --private-key "$PK_ADMIN" >/dev/null
+cast send "$GOVERNOR" 'finalize(uint256)' "$BALLOT" --rpc-url "$RPC" --unlocked --from "$ADMIN" >/dev/null
+cast send "$GOVERNOR" 'execute(uint256)' "$BALLOT" --rpc-url "$RPC" --unlocked --from "$ADMIN" >/dev/null
 
 HEAD_OUT="$(cast call "$REGISTRY" 'head(bytes32)(uint8,uint8,bytes32)' "$DOC_ID" --rpc-url "$RPC")"
 DIGEST="$(printf '%s\n' "$HEAD_OUT" | tail -n 1 | awk '{print $1}')"
