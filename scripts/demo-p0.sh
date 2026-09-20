@@ -71,7 +71,7 @@ cd "$ROOT"
 forge build -q
 REGISTRY_JSON="$(forge create contracts/src/CanonicalHeadRegistry.sol:CanonicalHeadRegistry --rpc-url "$RPC" --private-key "$PK_ADMIN" --broadcast --json)"
 REGISTRY="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["deployedTo"])' <<<"$REGISTRY_JSON")"
-GOV_JSON="$(forge create contracts/src/CoheretronGovernor.sol:CoheretronGovernor --constructor-args "$REGISTRY" --rpc-url "$RPC" --private-key "$PK_ADMIN" --broadcast --json)"
+GOV_JSON="$(forge create contracts/src/CoheretronGovernor.sol:CoheretronGovernor --rpc-url "$RPC" --private-key "$PK_ADMIN" --broadcast --json --constructor-args "$REGISTRY")"
 GOVERNOR="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["deployedTo"])' <<<"$GOV_JSON")"
 cast send "$REGISTRY" 'setGovernor(address)' "$GOVERNOR" --rpc-url "$RPC" --private-key "$PK_ADMIN" >/dev/null
 
