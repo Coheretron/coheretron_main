@@ -1,0 +1,70 @@
+version: 1
+recorded_at: "2026-09-20"
+
+upstreams:
+  gitlab:
+    role: authoring-workbench
+    upstream:
+      repository: gitlabhq/gitlabhq
+      url: https://github.com/gitlabhq/gitlabhq.git
+      default_branch: master
+      commit: 90edc25f8dc901b2ace05aab9b11665da6cb768d
+    fork:
+      repository: Coheretron/gitlabhq
+      url: https://github.com/Coheretron/gitlabhq.git
+    remotes:
+      upstream: gitlab-upstream
+      fork: gitlab-fork
+    update_policy: reviewed
+    required_checks:
+      - governed-branch-hook
+      - governance-adapter-integration
+      - git-gosh-oid-roundtrip
+      - canonical-state-sync
+
+  gosh:
+    role: verifiable-git-object-layer
+    upstream:
+      repository: gosh-sh/gosh
+      url: https://github.com/gosh-sh/gosh.git
+      default_branch: dev
+      commit: 7620917af0992257a4cbb25e2c48b9b7f948f70b
+    fork:
+      repository: Coheretron/gosh
+      url: https://github.com/Coheretron/gosh.git
+    remotes:
+      upstream: gosh-upstream
+      fork: gosh-fork
+    update_policy: pinned-manual
+    required_checks:
+      - git-remote-gosh-compatibility
+      - exact-oid-roundtrip
+      - object-closure
+      - independent-fetch
+      - contract-abi-compatibility
+
+  alligator:
+    role: delegated-authority
+    upstream:
+      repository: voteagora/optimism-governor
+      url: https://github.com/voteagora/optimism-governor.git
+      default_branch: main
+      commit: cc8e959dcf2daa022c2a370a82394b12565843b1
+    fork:
+      repository: Coheretron/optimism-governor
+      url: https://github.com/Coheretron/optimism-governor.git
+    remotes:
+      upstream: alligator-upstream
+      fork: alligator-fork
+    update_policy: semantic-review
+    required_checks:
+      - unit
+      - fuzz
+      - invariants
+      - reference-model-differential
+      - conservation
+      - no-double-use
+      - cycle-safety
+      - replay-safety
+      - historical-ballot-compatibility
+      - gas-regression
