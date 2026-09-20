@@ -1,0 +1,25 @@
+name: Verify upstream pins
+
+on:
+  pull_request:
+    paths:
+      - "UPSTREAM.md"
+      - "upstreams/**"
+      - "scripts/check-upstream-pins.sh"
+      - ".github/workflows/upstream-pins.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify pinned upstream commits
+        run: bash scripts/check-upstream-pins.sh
