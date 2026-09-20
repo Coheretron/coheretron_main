@@ -1,4 +1,4 @@
-.PHONY: configure-upstreams check-upstream-pins test test-python test-contracts demo-p0
+.PHONY: configure-upstreams check-upstream-pins test test-python test-contracts demo-p0 smoke-live-gosh
 
 configure-upstreams:
 	bash scripts/configure-upstreams.sh
@@ -16,3 +16,6 @@ test-contracts:
 
 demo-p0:
 	bash scripts/demo-p0.sh
+
+smoke-live-gosh:
+	bash scripts/smoke-live-gosh.sh
